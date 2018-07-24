@@ -1,5 +1,4 @@
-﻿local CombuctorSet = Combuctor:GetModule("Sets")
-local L = {}
+﻿local L = {}
 L.Binding = "Binding"
 L.All = "All"
 L.Account = "Account"
@@ -10,6 +9,11 @@ L.Soulbound = "Soulbound"
 
 local tooltipCache = setmetatable({}, {__index = function(t, k) local v = {} t[k] = v return v end})
 local tooltipScanner = _G['LibItemSearchTooltipScanner'] or CreateFrame('GameTooltip', 'LibItemSearchTooltipScanner', UIParent, 'GameTooltipTemplate')
+
+local Addon = Combuctor
+local ItemSlot = Addon.ItemSlot
+local UpdateBorder = ItemSlot.UpdateBorder
+
 --
 -- Copied pretty much wholesale from LibItemSearch 1.2
 -- 
@@ -30,17 +34,18 @@ local function link_FindSearchInTooltip(itemLink, search, bag, slot)
 	if _G[tooltipScanner:GetName() .. 'TextLeft1']:GetText() == nil then
 		return false
 	end
-		
+        
+    local numLines = tooltipScanner:NumLines()
     local result = false
-    if tooltipScanner:NumLines() > 1 and _G[tooltipScanner:GetName() .. 'TextLeft2']:GetText() == search then
+    if numLines > 1 and _G[tooltipScanner:GetName() .. 'TextLeft2']:GetText() == search then
 		result = true
-    elseif tooltipScanner:NumLines() > 2 and _G[tooltipScanner:GetName() .. 'TextLeft3']:GetText() == search then
+    elseif numLines > 2 and _G[tooltipScanner:GetName() .. 'TextLeft3']:GetText() == search then
 		result = true
-    elseif tooltipScanner:NumLines() > 3 and _G[tooltipScanner:GetName() .. 'TextLeft4']:GetText() == search then
+    elseif numLines > 3 and _G[tooltipScanner:GetName() .. 'TextLeft4']:GetText() == search then
 		result = true
-    elseif tooltipScanner:NumLines() > 4 and _G[tooltipScanner:GetName() .. 'TextLeft5']:GetText() == search then
+    elseif numLines > 4 and _G[tooltipScanner:GetName() .. 'TextLeft5']:GetText() == search then
 		result = true
-    elseif tooltipScanner:NumLines() > 5 and _G[tooltipScanner:GetName() .. 'TextLeft6']:GetText() == search then
+    elseif numLines > 5 and _G[tooltipScanner:GetName() .. 'TextLeft6']:GetText() == search then
 		result = true
     end
 
@@ -48,7 +53,11 @@ local function link_FindSearchInTooltip(itemLink, search, bag, slot)
 	return result
 end
 
-local function isBindToAccount(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+local function isBindToAccount(player, bag, slot, bagInfo, itemInfo)
+    if not itemInfo then
+        return false
+    end
+    link = itemInfo.link
     if not link then
         return false
     end
@@ -58,47 +67,67 @@ local function isBindToAccount(player, bagType, name, link, quality, level, ilvl
 		or link_FindSearchInTooltip(link, ITEM_ACCOUNTBOUND, bag, slot)
 end
 
-local function isBindOnEquip(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+local function isBindOnEquip(player, bag, slot, bagInfo, itemInfo)
+    if not itemInfo then
+        return false
+    end
+    link = itemInfo.link
     if not link then
         return false
     end
     return link_FindSearchInTooltip(link, ITEM_BIND_ON_EQUIP, bag, slot) and not link_FindSearchInTooltip(link, ITEM_SOULBOUND, bag, slot)
 end
 
-local function isBindOnUse(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+local function isBindOnUse(player, bag, slot, bagInfo, itemInfo)
+    if not itemInfo then
+        return false
+    end
+    link = itemInfo.link
     if not link then
         return false
     end
     return link_FindSearchInTooltip(link, ITEM_BIND_ON_USE, bag, slot) and not link_FindSearchInTooltip(link, ITEM_SOULBOUND, bag, slot)
 end
 
-local function isBindOnPickup(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+local function isBindOnPickup(player, bag, slot, bagInfo, itemInfo)
+    if not itemInfo then
+        return false
+    end
+    link = itemInfo.link
     if not link then
         return false
     end
     return link_FindSearchInTooltip(link, ITEM_BIND_ON_PICKUP, bag, slot)
 end
 
-local function isSoulbound(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+local function isSoulbound(player, bag, slot, bagInfo, itemInfo)
+    if not itemInfo then
+        return false
+    end
+    link = itemInfo.link
     if not link then
         return false
     end
     return link_FindSearchInTooltip(link, ITEM_SOULBOUND, bag, slot)
 end
 
-local function isBinding(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+local function isBinding(player, bag, slot, bagInfo, itemInfo)
+    if not itemInfo then
+        return false
+    end
+    link = itemInfo.link
     if not link then
         return false
     end
-    return isBindToAccount(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
-		or isBindOnEquip(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
-		or isBindOnUse(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
-		or isSoulbound(player, bagType, name, link, quality, level, ilvl, type, subType, stackCount, equipLoc, bag, slot)
+    return isBindToAccount(player, bag, slot, bagInfo, itemInfo)
+		or isBindOnEquip(player, bag, slot, bagInfo, itemInfo)
+		or isBindOnUse(player, bag, slot, bagInfo, itemInfo)
+		or isSoulbound(player, bag, slot, bagInfo, itemInfo)
 end
 
-CombuctorSet:Register(L.Binding, "Interface/Icons/Achievement_Reputation_ArgentChampion", isBinding);
-CombuctorSet:RegisterSubSet(L.All, L.Binding);
-CombuctorSet:RegisterSubSet(L.Account, L.Binding, nil, isBindToAccount);
-CombuctorSet:RegisterSubSet(L.Equip, L.Binding, nil, isBindOnEquip);
-CombuctorSet:RegisterSubSet(L.Use, L.Binding, nil, isBindOnUse);
-CombuctorSet:RegisterSubSet(L.Soulbound, L.Binding, nil, isSoulbound);
+Addon.Rules:New('binding', L.Binding, 'Interface/Icons/Achievement_Reputation_ArgentChampion', isBinding)
+Addon.Rules:New('binding/all', L.All, nil, isBinding)
+Addon.Rules:New('binding/use', L.Use, nil, isBindOnUse)
+Addon.Rules:New('binding/soulbound', L.Soulbound, nil, isSoulbound)
+Addon.Rules:New('binding/equip', L.Equip, nil, isBindOnEquip)
+Addon.Rules:New('binding/account', L.Account, nil, isBindToAccount)

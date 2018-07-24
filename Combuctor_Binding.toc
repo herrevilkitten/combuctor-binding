@@ -1,9 +1,9 @@
-﻿## Interface: 70000
+﻿## Interface: 80000
 ## Title: Combuctor Binding
 ## Author: kageneko
 ## Notes: Requires Combuctor
 ## Dependencies: Combuctor
 ## OptionalDeps: Combuctor_Sets
-## Version: 1.00
+## Version: 8.00
 
 Combuctor_Binding.lua
